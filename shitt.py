@@ -4,12 +4,13 @@ import sys
 sys.setrecursionlimit(1000000)
 
 class State:
-	def __init__(self, score, world, move, confirm, tkscore):
+	def __init__(self, score, world, move, confirm, tkscore,level):
 		self.s = score
 		self.w = world
 		self.m = move
 		self.c = confirm
 		self.t = tkscore
+		self.l = level
 	def __hash__(self):
 		return hash(self.w)
 
@@ -130,10 +131,10 @@ class Man:
 			confirm2 = confirm + move
 			tkscore=kscore
 			tkscore.append(score)
-			tempstate = State(score, tempu, move, confirm2,tkscore)
+			tempstate = State(score, tempu, move, confirm2,tkscore,level)
 
 			#NEED TO FIX THIS IF, IDK IF THIS IF WORKS
-			if(confirm[-1]!="D" and tempstate not in thenext):
+			if(confirm[-1]!="D" or tempstate not in thenext):
 				self.count+=1
 				thenext.append(tempstate)
 
@@ -142,14 +143,14 @@ class Man:
 			tempd[y][x]=tempd[y+1][x]
 			tempd[y+1][x]="0"
 
-			score = self.update(tempd)+level
+			score = self.update(tempd)
 			move = " D"
 			confirm2 = confirm + move
 			tkscore=kscore
 			tkscore.append(score)
-			tempstate = State(score, tempd, move, confirm2,tkscore)
+			tempstate = State(score, tempd, move, confirm2,tkscore,level)
 
-			if(confirm[-1]!="U" and tempstate not in thenext):
+			if(confirm[-1]!="U" or tempstate not in thenext):
 				thenext.append(tempstate)
 				self.count+=1
 
@@ -158,14 +159,14 @@ class Man:
 			templ[y][x]=templ[y][x-1]
 			templ[y][x-1]="0"
 
-			score = self.update(templ)+level
+			score = self.update(templ)
 			move = " L"
 			confirm2 = confirm + move
 			tkscore=kscore
 			tkscore.append(score)
-			tempstate = State(score, templ, move, confirm2,tkscore)
+			tempstate = State(score, templ, move, confirm2,tkscore,level)
 
-			if(confirm[-1]!="R" and tempstate not in thenext):
+			if(confirm[-1]!="R" or tempstate not in thenext):
 				thenext.append(tempstate)
 				self.count+=1
 		if(x+1<3):#move right
@@ -173,24 +174,25 @@ class Man:
 			tempr[y][x]=tempr[y][x+1]
 			tempr[y][x+1]="0"
 
-			score = self.update(tempr)+level
+			score = self.update(tempr)
 			move = " R"
 			confirm2 = confirm + move
 			tkscore=kscore
 			tkscore.append(score)
-			tempstate = State(score, tempr, move, confirm2,tkscore)
+			tempstate = State(score, tempr, move, confirm2,tkscore,level)
 
-			if(confirm[-1]!="L" and tempstate not in thenext):
+			if(confirm[-1]!="L" or tempstate not in thenext):
 				thenext.append(tempstate)
 				self.count+=1
 		thenext.sort(key=lambda x: x.s, reverse=False)
 
-		
+		# print(self.count)
 		nextstate=thenext.pop(0)
 		score = nextstate.s
 		nexttemp = nextstate.w
 		confirm = nextstate.c
 		kscore = nextstate.t
+		level = nextstate.l
 		
 		# print("SCORE")
 		# print(score)
@@ -204,7 +206,7 @@ class Man:
 	
 	def out(self,fp):
 
-		confirm,level,kscore=self.astar(self.begin," ",[self.update(self.begin)])
+		confirm,level,kscore=self.astar(self.begin," ",[self.update(self.begin)],[],0)
 		
 		for lines in self.begin:
 			for i in lines:
@@ -220,11 +222,15 @@ class Man:
 
 		fp.write("\r\n") #line 8 empty
 
-		fp.write(str(level)+"\r\n")
-		fp.write(str(self.count)+"\r\n")
-		fp.write(confirm+"\r\n")
+		fp.write(str(level-1)+"\r\n") #line 9 of depth
+
+		fp.write(str(self.count)+"\n") #line 10 for generated nodes
+		# self.count=0
+ 
+		fp.write(confirm[2:]+"\r\n") #the path of the answer. Getting rid of empty space by [2:]
+
 		for i in kscore:
-			fp.write(str(i)+" ")
+			fp.write(str(i)+" ") #f(n)
 
 
 
