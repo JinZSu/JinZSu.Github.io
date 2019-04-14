@@ -1,15 +1,17 @@
 # python3 A\*Algo.py 
 import copy
 import sys
-# sys.setrecursionlimit(10000)
+sys.setrecursionlimit(1000000)
 
-class states:
-	def __init__(self,world,score,move,confirm):
-		self.world=world
-		self.score=score
-		self.move=move
-		self.confirm=confirm
-
+class State:
+	def __init__(self, score, world, move, confirm, tkscore):
+		self.s = score
+		self.w = world
+		self.m = move
+		self.c = confirm
+		self.t = tkscore
+	def __hash__(self):
+		return hash(self.w)
 
 class Man:
 	def __init__(self,fp,inputx):
@@ -17,7 +19,7 @@ class Man:
 		self.begin= []
 		self.end= []
 		self.inputx=inputx
-		self.history={}
+		self.count=0
 		self.scan()
 
 	def manhattan(self,a,b,c,d):
@@ -110,70 +112,120 @@ class Man:
 				if(temp[y][x]=="0"):
 					return (y,x)
 
-	def astar(self,temp=[],confirm=" ",thenext=[], level=0):
+	def astar(self,temp=[],confirm=" ",kscore=[],thenext=[], level=0):
 		level += 1
-		if(temp==[]):
+		if(temp==[] and kscore==[]):
 			temp=self.begin
+			kscore.append(self.update(temp))
 		if(temp==self.end):
-			print("A* has finished")
-			return confirm
+			print("DONEEEEE")
+			return confirm,level,kscore
 		y,x = self.algo(temp)
 		if(y-1>=0):#move up
 			tempu=copy.deepcopy(temp)
 			tempu[y][x]=tempu[y-1][x]
 			tempu[y-1][x]="0"
-			score=self.update(tempu)+level
-			move="U"
-			confirm+=move
-			tempstack=states(score,tempu,move,confirm)
+			score = self.update(tempu)
+			move = " U"
+			confirm2 = confirm + move
+			tkscore=kscore
+			tkscore.append(score)
+			tempstate = State(score, tempu, move, confirm2,tkscore)
 
-			if(confirm[-1]!="D" and [self.update(tempu)+level,tempu] not in thenext):
-				thenext.append([self.update(tempu)+level,tempu])
+			#NEED TO FIX THIS IF, IDK IF THIS IF WORKS
+			if(confirm[-1]!="D" and tempstate not in thenext):
+				self.count+=1
+				thenext.append(tempstate)
+
 		if(y+1<3):#move down
 			tempd=copy.deepcopy(temp)
 			tempd[y][x]=tempd[y+1][x]
 			tempd[y+1][x]="0"
-			score=self.update(tempd)+level
-			move="D"
-			confirm+=move
-			tempstack=states(score,tempd,move,confirm)
 
-			if(confirm[-1]!="U" and [self.update(tempd)+level,tempd] not in thenext):
-				thenext.append([self.update(tempd)+level,tempd])
+			score = self.update(tempd)+level
+			move = " D"
+			confirm2 = confirm + move
+			tkscore=kscore
+			tkscore.append(score)
+			tempstate = State(score, tempd, move, confirm2,tkscore)
+
+			if(confirm[-1]!="U" and tempstate not in thenext):
+				thenext.append(tempstate)
+				self.count+=1
+
 		if(x-1>=0):#move left
 			templ=copy.deepcopy(temp)
 			templ[y][x]=templ[y][x-1]
 			templ[y][x-1]="0"
-			score=self.update(templ)+level
-			move="L"
-			confirm+=move
-			tempstack=states(score,templ,move,confirm)
 
-			if(confirm[-1]!="R" and [self.update(templ)+level,templ] not in thenext):
-				thenext.append([self.update(templ)+level,templ])
+			score = self.update(templ)+level
+			move = " L"
+			confirm2 = confirm + move
+			tkscore=kscore
+			tkscore.append(score)
+			tempstate = State(score, templ, move, confirm2,tkscore)
+
+			if(confirm[-1]!="R" and tempstate not in thenext):
+				thenext.append(tempstate)
+				self.count+=1
 		if(x+1<3):#move right
 			tempr=copy.deepcopy(temp)
 			tempr[y][x]=tempr[y][x+1]
 			tempr[y][x+1]="0"
-			score=self.update(tempr)+level
-			move="R"
-			confirm+=move
-			tempstack=states(score,tempr,move,confirm)
 
+			score = self.update(tempr)+level
+			move = " R"
+			confirm2 = confirm + move
+			tkscore=kscore
+			tkscore.append(score)
+			tempstate = State(score, tempr, move, confirm2,tkscore)
 
-			if(confirm[-1]!="L" and [self.update(tempr)+level,tempr] not in thenext):
-				thenext.append([self.update(tempr)+level,tempr])
+			if(confirm[-1]!="L" and tempstate not in thenext):
+				thenext.append(tempstate)
+				self.count+=1
+		thenext.sort(key=lambda x: x.s, reverse=False)
 
-		thenext.sort()
-		n=thenext.pop(0)
-		# if(n not in self.history):
-		# 	self.history[n]=states()
-		nexttemp=n[1]
-		if(level!=)
+		
+		nextstate=thenext.pop(0)
+		score = nextstate.s
+		nexttemp = nextstate.w
+		confirm = nextstate.c
+		kscore = nextstate.t
+		
+		# print("SCORE")
+		# print(score)
+		# print("nexttemp")
+		# for line in nexttemp:
+		# 	print(line)
+		# print("CONFIRM")
+		# print(confirm)
+		# input()
+		return self.astar(nexttemp,confirm,kscore,thenext, level)
+	
+	def out(self,fp):
 
+		confirm,level,kscore=self.astar(self.begin," ",[self.update(self.begin)])
+		
+		for lines in self.begin:
+			for i in lines:
+				fp.write(i+' ')
+			fp.write("\r\n") #lines 1-3 of begin 
 
-		return self.astar(nexttemp,confirm,thenext,level)
-	# def out(self,ostring):
+		fp.write("\r\n") #line 4 empty
+
+		for lines in self.end:
+			for i in lines:
+				fp.write(i+' ')
+			fp.write("\r\n") #line 5-7 of end
+
+		fp.write("\r\n") #line 8 empty
+
+		fp.write(str(level)+"\r\n")
+		fp.write(str(self.count)+"\r\n")
+		fp.write(confirm+"\r\n")
+		for i in kscore:
+			fp.write(str(i)+" ")
+
 
 
 
@@ -181,18 +233,22 @@ class Man:
 
 def main():
 	print("Would you like to use:")
-	print("(1) sum of Manhattan distances of tiles from their goal position \n (2) sum of Manhattan distances + 2× # linear conflicts. ")
+	print("(1) sum of Manhattan distances of tiles from their goal position \n(2) sum of Manhattan distances + 2× # linear conflicts. ")
 	print("Enter the number 1 or 2 : ")
 	inputx=input()
 	if(inputx=="1" or inputx=="2"):
-			fp = open("Input"+str(1)+".txt",'r')
+			# fp = open("Input"+str(1)+".txt",'r')
+			# woman = Man(fp,inputx)
+			# print(woman.astar())
+		for i in range(1,4):
+			fp = open("Input"+str(i)+".txt",'r')
+			print(fp)
 			woman = Man(fp,inputx)
-			print(woman.astar())
-		# for i in range(1,5):
-		# 	fp = open("Input"+str(i)+".txt",'r')
-		# 	woman = Man(fp,inputx)
-		# 	print(woman.astar())
-			# woman.out("Output"+str(i)+".txt")
+			# print(woman.astar())
+			fp.close()
+			fp = open("Output"+str(i)+".txt",'w')
+			woman.out(fp)
+			fp.close()
 	else:
 		print("ERROR")
 		print("Input not valid")
