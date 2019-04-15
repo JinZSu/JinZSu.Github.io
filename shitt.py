@@ -1,10 +1,10 @@
 # python3 A\*Algo.py 
 import copy
 import sys
-sys.setrecursionlimit(1000000)
+sys.setrecursionlimit(100000000)
 
 class State:
-	def __init__(self, score, world, move, confirm, tkscore,level):
+	def __init__(self, score, world, move, confirm, tkscore,level): #this stores the state of a generated branch
 		self.s = score
 		self.w = world
 		self.m = move
@@ -15,8 +15,8 @@ class State:
 		return hash(self.w)
 
 class Man:
-	def __init__(self,fp,inputx):
-		self.fp= fp
+	def __init__(self,fp,inputx): #gets the input choice and the file pointer
+		self.fp= fp 
 		self.begin= []
 		self.end= []
 		self.inputx=inputx
@@ -24,9 +24,9 @@ class Man:
 		self.scan()
 
 	def manhattan(self,a,b,c,d):
-		return abs(a-c)+abs(b-d)
+		return abs(a-c)+abs(b-d) #cal manhattan blocks
 
-	def linear_conflict(self,temp=[]):
+	def linear_conflict(self,temp=[]): #calculate the linear conflict numbers
 		goaldictionary={}
 		dictionary={}
 		if(temp==[]):
@@ -51,10 +51,10 @@ class Man:
 		# print(sum)
 		return sum
 
-	def update(self,temp=[]):
+	def update(self,temp=[]):	#calculate the function
 		goaldictionary={}
 		dictionary={}
-		if(temp==[]):
+		if(temp==[]): 
 			temp=self.begin
 		for y in range(len(self.end)):
 			for x in range(len(self.end[0])):
@@ -63,8 +63,8 @@ class Man:
 
 		for y in range(len(temp)):
 			for x in range(len(temp[0])):
-				if(self.begin[y][x]!="0"):
-					dictionary[self.begin[y][x]]=(x+1,y+1)
+				if(temp[y][x]!="0"):
+					dictionary[temp[y][x]]=(x+1,y+1)
 
 		sum=0
 		linear=self.linear_conflict(temp)
@@ -73,13 +73,12 @@ class Man:
 			x2,y2=goaldictionary[distance]
 			sum+=self.manhattan(x1,y1,x2,y2)
 			# print(distance,":",self.manhattan(x1,y1,x2,y2))
-		# print(sum)
 		if(self.inputx=="2"):
 			return sum+linear
 		return sum
 
 
-	def fprint(self):
+	def fprint(self): #to print the given data
 		print("="*10,"BEGIN","="*10)
 		for line in self.begin:
 			print(line)
@@ -87,7 +86,7 @@ class Man:
 		for line in self.end:
 			print(line)
 
-	def scan(self):
+	def scan(self): #scans the data into fps
 		R=[]
 		flag = True
 		for line in self.fp:
@@ -105,7 +104,7 @@ class Man:
 		self.update()
 
 
-	def algo(self,temp=[]):
+	def algo(self,temp=[]): #gets the first zero
 		if(temp==[]):
 			self.begin=[]
 		for y in range(len(temp)):
@@ -113,28 +112,31 @@ class Man:
 				if(temp[y][x]=="0"):
 					return (y,x)
 
-	def astar(self,temp=[],confirm=" ",kscore=[],thenext=[], level=0):
+	def astar(self,temp=[],confirm=" ",kscore=[],thenext=[], level=0): #astar
 		level += 1
-		if(temp==[] and kscore==[]):
+		first=False
+		if(temp==[]): #if it's root begin with self.begin
+			first=True
+		if(kscore==[] and temp==[]): #if both empty then keep score of root
 			temp=self.begin
 			kscore.append(self.update(temp))
-		if(temp==self.end):
+		if(temp==self.end): #if end goal then return everything
 			print("DONEEEEE")
 			return confirm,level,kscore
-		y,x = self.algo(temp)
+		y,x = self.algo(temp) #get 0 cords
 		if(y-1>=0):#move up
-			tempu=copy.deepcopy(temp)
+			tempu=copy.deepcopy(temp) #copy 
 			tempu[y][x]=tempu[y-1][x]
 			tempu[y-1][x]="0"
 			score = self.update(tempu)
 			move = " U"
 			confirm2 = confirm + move
-			tkscore=kscore
-			tkscore.append(score)
-			tempstate = State(score, tempu, move, confirm2,tkscore,level)
-
+			tkscore1=copy.deepcopy(kscore)
+			tkscore1.append(score)
+			tempstate = State(score, tempu, move, confirm2,tkscore1,level) #keep the state of score, move, level and new path and new map
+			# print(score)
 			#NEED TO FIX THIS IF, IDK IF THIS IF WORKS
-			if(confirm[-1]!="D" or tempstate not in thenext):
+			if(first or confirm[-1]!="D" or tempstate not in thenext):
 				self.count+=1
 				thenext.append(tempstate)
 
@@ -146,11 +148,11 @@ class Man:
 			score = self.update(tempd)
 			move = " D"
 			confirm2 = confirm + move
-			tkscore=kscore
-			tkscore.append(score)
-			tempstate = State(score, tempd, move, confirm2,tkscore,level)
-
-			if(confirm[-1]!="U" or tempstate not in thenext):
+			tkscore2=copy.deepcopy(kscore)
+			tkscore2.append(score)
+			tempstate = State(score, tempd, move, confirm2,tkscore2,level)#keep the state of score, move, level and new path and new map
+			# print(score)
+			if(first or confirm[-1]!="U" or tempstate not in thenext):
 				thenext.append(tempstate)
 				self.count+=1
 
@@ -162,11 +164,11 @@ class Man:
 			score = self.update(templ)
 			move = " L"
 			confirm2 = confirm + move
-			tkscore=kscore
-			tkscore.append(score)
-			tempstate = State(score, templ, move, confirm2,tkscore,level)
-
-			if(confirm[-1]!="R" or tempstate not in thenext):
+			tkscore3=copy.deepcopy(kscore)
+			tkscore3.append(score)
+			tempstate = State(score, templ, move, confirm2,tkscore3,level)#keep the state of score, move, level and new path and new map
+			# print(score)
+			if(first or confirm[-1]!="R" or tempstate not in thenext):
 				thenext.append(tempstate)
 				self.count+=1
 		if(x+1<3):#move right
@@ -177,36 +179,38 @@ class Man:
 			score = self.update(tempr)
 			move = " R"
 			confirm2 = confirm + move
-			tkscore=kscore
-			tkscore.append(score)
-			tempstate = State(score, tempr, move, confirm2,tkscore,level)
-
-			if(confirm[-1]!="L" or tempstate not in thenext):
+			tkscore4=copy.deepcopy(kscore)
+			tkscore4.append(score)
+			tempstate = State(score, tempr, move, confirm2,tkscore4,level)#keep the state of score, move, level and new path and new map
+			# print(score)
+			if(first or confirm[-1]!="L" or tempstate not in thenext):
 				thenext.append(tempstate)
 				self.count+=1
-		thenext.sort(key=lambda x: x.s, reverse=False)
+		thenext.sort(key=lambda x: x.s, reverse=False) #choose the node with the smallest generated score
 
-		# print(self.count)
-		nextstate=thenext.pop(0)
+		# for thing in thenext:
+		# 	print(thing.t)
+		nextstate=thenext.pop(0) #make it to the next generated data
 		score = nextstate.s
 		nexttemp = nextstate.w
 		confirm = nextstate.c
 		kscore = nextstate.t
 		level = nextstate.l
+		# print(kscore)
 		
-		# print("SCORE")
-		# print(score)
-		# print("nexttemp")
-		# for line in nexttemp:
-		# 	print(line)
-		# print("CONFIRM")
-		# print(confirm)
+		print("SCORE")
+		print(score)
+		print("nexttemp")
+		for line in nexttemp:
+			print(line)
+		print("CONFIRM")
+		print(confirm)
 		# input()
 		return self.astar(nexttemp,confirm,kscore,thenext, level)
 	
 	def out(self,fp):
 
-		confirm,level,kscore=self.astar(self.begin," ",[self.update(self.begin)],[],0)
+		confirm,level,kscore=self.astar(self.begin," ",[self.update(self.begin)],[],0) #printing format
 		
 		for lines in self.begin:
 			for i in lines:
@@ -242,11 +246,11 @@ def main():
 	print("(1) sum of Manhattan distances of tiles from their goal position \n(2) sum of Manhattan distances + 2× # linear conflicts. ")
 	print("Enter the number 1 or 2 : ")
 	inputx=input()
+	i=1
 	if(inputx=="1" or inputx=="2"):
 			# fp = open("Input"+str(1)+".txt",'r')
 			# woman = Man(fp,inputx)
-			# print(woman.astar())
-		for i in range(1,4):
+		for i in range(1,5):
 			fp = open("Input"+str(i)+".txt",'r')
 			print(fp)
 			woman = Man(fp,inputx)
